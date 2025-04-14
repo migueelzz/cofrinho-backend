@@ -55,12 +55,11 @@ export async function authenticateWithPassword(app: FastifyInstance) {
       );
 
       reply.setCookie("token", token, {
+        httpOnly: true,
         path: "/",
         sameSite:"none",
-        httpOnly: true,
         secure: true,
         maxAge: 60 * 60 * 24 * 7, // 7 dias
-        domain: "cofrinho-alpha.vercel.app"
       });
 
       return reply.status(201).send({ token });
