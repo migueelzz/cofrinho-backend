@@ -19,7 +19,7 @@ export async function authenticateWithPassword(app: FastifyInstance) {
         }),
         response: {
           201: z.object({
-            success: z.boolean(),
+            token: z.string(),
           }),
         },
       },
@@ -61,7 +61,7 @@ export async function authenticateWithPassword(app: FastifyInstance) {
         maxAge: 60 * 60 * 24 * 7, // 7 dias
       });
 
-      return reply.status(201).send({ success: true });
+      return reply.status(201).send({ token });
     }
   );
 }
