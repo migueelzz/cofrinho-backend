@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  name         String?
+  email        String    @unique
+  passwordHash String?   @map("password_hash")
+  avatarUrl    String?   @map("avatar_url")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tokens             Token[]
+  accounts           Account[]
+  invites            Invite[]
+  member_on          Member[]
+  owns_workspaces    Workspace[]
+  transactions       Transaction[]
+  notificationTokens NotificationToken[]
+  subscriptions      Subscription[]
+  customers          Customer[]
+  sales              Sale[]
+
+  @@map("users")
+}
+
+model NotificationToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  platform  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@map("notification_tokens")
+}
+
+enum TokenType {
+  PASSWORD_RECOVER
+}
+
+model Token {
+  id        String    @id @default(uuid())
+  type      TokenType
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  @@map("tokens")
+}
+
+enum AccountProvider {
+  GOOGLE
+  GITHUB
+}
+
+model Account {
+  id                String          @id @default(uuid())
+  provider          AccountProvider
+  providerAccountId String          @unique @map("provider_account_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  @@unique([provider, userId])
+  @@map("accounts")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  email     String
+  role      Role
+  createdAt DateTime @default(now()) @map("created_at")
+
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId String? @map("author_id")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+
+  @@unique([email, workspaceId])
+  @@index([email])
+  @@map("invites")
+}
+
+model Member {
+  id   String @id @default(uuid())
+  role Role   @default(MEMBER)
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  @@unique([workspaceId, userId])
+  @@map("members")
+}
+
+model Workspace {
+  id        String  @id @default(uuid())
+  name      String
+  slug      String  @unique
+  avatarUrl String? @map("avatar_url")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId String @map("owner_id")
+
+  invites      Invite[]
+  members      Member[]
+  transactions Transaction[]
+  customers    Customer[]
+  Sale         Sale[]
+  Category     Category[]
+
+  @@map("workspaces")
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  transactions Transaction[]
+
+  @@unique([workspaceId, name])
+  @@map("categories")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Transaction {
+  id          String          @id @default(uuid())
+  amount      Decimal
+  type        TransactionType
+  category    Category        @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  date        DateTime        @default(now())
+  description String?
+
+  isRecurring  Boolean         @default(false)
+  recurrence   RecurrenceRule? @relation(fields: [recurrenceId], references: [id])
+  recurrenceId String?
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  notifyUser Boolean @default(false)
+
+  @@map("transactions")
+}
+
+model RecurrenceRule {
+  id             String              @id @default(uuid())
+  frequency      RecurrenceFrequency
+  interval       Int                 @default(1)
+  nextOccurrence DateTime            @map("next_occurrence")
+
+  transactions Transaction[]
+
+  @@map("recurrence_rules")
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model Plan {
+  id          String  @id @default(uuid())
+  name        String
+  price       Decimal
+  interval    String
+  description String?
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id          String    @id @default(uuid())
+  userId      String
+  planId      String
+  status      String
+  trialEndsAt DateTime?
+  startedAt   DateTime  @default(now())
+  endsAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  payments Payment[]
+
+  @@map("subscriptions")
+}
+
+model Payment {
+  id             String    @id @default(uuid())
+  subscriptionId String
+  amount         Decimal
+  status         String
+  referenceId    String
+  paidAt         DateTime?
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Customer {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?   @unique
+  phone     String?
+  notes     String?
+  birthday  DateTime?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+
+  sales Sale[]
+
+  @@map("customers")
+}
+
+model Sale {
+  id          String    @id @default(uuid())
+  description String?
+  amount      Decimal
+  paid        Boolean   @default(false)
+  dueDate     DateTime?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String   @map("customer_id")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+
+  @@map("sales")
+}
