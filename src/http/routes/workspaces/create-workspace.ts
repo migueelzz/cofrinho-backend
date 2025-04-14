@@ -22,7 +22,15 @@ export async function createWorkspace(app: FastifyInstance) {
 					}),
 					response: {
 						201: z.object({
-							workspaceId: z.string(),
+							workspace: z.object({
+								id: z.string(),
+								name: z.string(),
+								slug: z.string(),
+								avatarUrl: z.string().nullable(),
+								createdAt: z.date(),
+								updatedAt: z.date(),
+								ownerId: z.string(),
+							}),
 						}),
 					},
 				},
@@ -45,7 +53,9 @@ export async function createWorkspace(app: FastifyInstance) {
 					},
 				});
 
-				return reply.status(201).send({ workspaceId: workspace.id });
+				return reply.status(201).send({ workspace });
 			},
 		);
 }
+
+

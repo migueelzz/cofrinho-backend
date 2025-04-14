@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { BadRequestError } from "../_errors/bad-request-error";
+import { env } from "@/config/env";
 
 export async function authenticateWithPassword(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
@@ -57,7 +58,7 @@ export async function authenticateWithPassword(app: FastifyInstance) {
         path: "/",
         httpOnly: true,
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: env.NODE_ENV === "production" ? true : false,
         maxAge: 60 * 60 * 24 * 7, // 7 dias
       });
 
