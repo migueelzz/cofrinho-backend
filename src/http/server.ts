@@ -42,7 +42,7 @@ import { updateMember } from "./routes/members/update-member";
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 
 app.register(fastifyCors, {
-	origin: ["http://localhost:3000"],
+	origin: ["http://localhost:3000", "https://cofrinho-alpha.vercel.app"],
 	methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 	allowedHeaders: ["Content-Type", "Authorization"],
 	credentials: true,
