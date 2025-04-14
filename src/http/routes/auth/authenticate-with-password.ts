@@ -56,9 +56,9 @@ export async function authenticateWithPassword(app: FastifyInstance) {
 
       reply.setCookie("token", token, {
         path: "/",
+        sameSite:"none",
         httpOnly: true,
-        sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-        secure: env.NODE_ENV === "production",
+        secure: true,
         maxAge: 60 * 60 * 24 * 7, // 7 dias
       });
 
