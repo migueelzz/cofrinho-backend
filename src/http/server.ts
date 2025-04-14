@@ -47,7 +47,7 @@ app.register(fastifyCors, {
 		"http://localhost:3000", 
 	],
 	methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-	allowedHeaders: ["Content-Type", "Authorization"],
+	allowedHeaders: ["Content-Type"],
 	credentials: true,
 });
 
