@@ -60,7 +60,7 @@ export async function authenticateWithPassword(app: FastifyInstance) {
         sameSite:"none",
         secure: true,
         maxAge: 60 * 60 * 24 * 7, // 7 dias
-        domain: env.NODE_ENV === "production" ? '.vercel.app' : undefined,
+        domain: env.NODE_ENV === "production" ? '.localizzei.com' : undefined,
       });
 
       return reply.status(201).send({ token });
