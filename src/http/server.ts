@@ -43,6 +43,7 @@ const app = fastify().withTypeProvider<ZodTypeProvider>();
 
 app.register(fastifyCors, {
 	origin: [
+		"https://www.localizzei.com",
 		"https://cofrinho-alpha.vercel.app",
 		"http://localhost:3000", 
 	],
