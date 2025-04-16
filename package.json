@@ -9,15 +9,17 @@
 		"start": "node dist/http/server.js",
 		"format": "biome format . --write",
 		"lint": "biome lint . --write",
-		"check": "biome check . --write"
+		"check": "biome check . --write",
+		"db:reset": "prisma migrate reset --force"
 	},
 	"prisma": {
-		"seed": "tsx prisma/seed.ts"
+			"seed": "tsx prisma/seed.ts"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@faker-js/faker": "^9.7.0",
 		"@fastify/cookie": "^11.0.2",
 		"@fastify/cors": "^11.0.0",
 		"@fastify/jwt": "^9.0.4",

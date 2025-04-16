@@ -5,6 +5,7 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { BadRequestError } from "../_errors/bad-request-error";
+import { fr } from "@faker-js/faker";
 
 export async function createTransaction(app: FastifyInstance) {
 	app
@@ -22,10 +23,10 @@ export async function createTransaction(app: FastifyInstance) {
 					}),
 					body: z.object({
 						amount: z.number().positive(),
-						type: z.enum(["INCOME", "EXPENSE"]),
+						type: z.enum(["INCOME", "EXPENSE", "INVESTMENT", "SAVING"]),
 						categoryId: z.string().uuid(),
 						date: z.coerce.date(),
-						description: z.string().optional(),
+						description: z.string(),
 						isRecurring: z.boolean().default(false),
 						recurrence: z
 							.object({
@@ -40,7 +41,7 @@ export async function createTransaction(app: FastifyInstance) {
 						201: z.object({
 							id: z.string().uuid(),
 							amount: z.instanceof(Prisma.Decimal),
-							type: z.enum(["INCOME", "EXPENSE"]),
+							type: z.enum(["INCOME", "EXPENSE", "INVESTMENT", "SAVING"]),
 							categoryId: z.string().uuid(),
 							date: z.date(),
 							description: z.string().nullable(),

@@ -10,42 +10,30 @@ export async function createCategory(app: FastifyInstance) {
 		.withTypeProvider<ZodTypeProvider>()
 		.register(auth)
 		.post(
-			"/workspaces/:slug/transactions/categories",
+			"/categories",
 			{
 				schema: {
-					tags: ["transactions"],
-					summary: "Create transaction category",
+					tags: ["categories"],
+					summary: "Create category",
 					security: [{ bearerAuth: [] }],
-					params: z.object({
-						slug: z.string(),
-					}),
 					body: z.object({
+						emoji: z.string().optional(),
 						name: z.string().min(1),
 					}),
 					response: {
 						201: z.object({
 							id: z.string().uuid(),
+							emoji: z.string().nullable(),
 							name: z.string(),
 						}),
 					},
 				},
 			},
 			async (request, reply) => {
-				const { name } = request.body;
-				const { slug } = request.params;
-
-				const workspace = await prisma.workspace.findUnique({
-					where: {
-						slug
-					}
-				})
-
-				if (!workspace) {
-					throw new BadRequestError('Workspace not found.')
-				}
+				const { emoji, name } = request.body;
 
 				const category = await prisma.category.create({
-					data: { name, workspaceId: workspace.id },
+					data: { emoji, name },
 				});
 
 				return reply.status(201).send(category);

@@ -22,13 +22,19 @@ export async function getAllMetrics(app: FastifyInstance) {
 					response: {
 						200: z.object({
 							totalIncome: z.number(),
-							totalExpense: z.number(),
 							netBalance: z.number(),
-							totalSales: z.number(),
-							paidSales: z.number(),
-							unpaidSales: z.number(),
-							totalCustomers: z.number(),
-							customersInDebt: z.number(),
+							expense: z.object({
+								total: z.number(),
+								percentage: z.number()
+							}),
+							investment: z.object({
+								total: z.number(),
+								percentage: z.number()
+							}),
+							saving: z.object({
+								total: z.number(),
+								percentage: z.number()
+							}),
 						}),
 					},
 				},
@@ -37,26 +43,16 @@ export async function getAllMetrics(app: FastifyInstance) {
 				const { slug } = request.params;
 
 				const workspace = await prisma.workspace.findUnique({
-					where: {
-						slug
-					}
-				})
+					where: { slug }
+				});
 
 				if (!workspace) {
-					throw new BadRequestError('Workspace not found.')
+					throw new BadRequestError("Workspace not found.");
 				}
 
 				const userId = await request.getCurrentUserId();
 
-				const [
-					income,
-					expense,
-					totalSales,
-					paidSales,
-					unpaidSales,
-					totalCustomers,
-					customersInDebt,
-				] = await Promise.all([
+				const [incomeAgg, expenseAgg, investmentAgg, savingAgg] = await Promise.all([
 					prisma.transaction.aggregate({
 						_sum: { amount: true },
 						where: { type: "INCOME", userId, workspaceId: workspace.id },
@@ -65,34 +61,42 @@ export async function getAllMetrics(app: FastifyInstance) {
 						_sum: { amount: true },
 						where: { type: "EXPENSE", userId, workspaceId: workspace.id },
 					}),
-					prisma.sale.count({ where: { userId, workspaceId: workspace.id } }),
-					prisma.sale.count({ where: { userId, workspaceId: workspace.id, paid: true } }),
-					prisma.sale.count({ where: { userId, workspaceId: workspace.id, paid: false } }),
-					prisma.customer.count({ where: { userId, workspaceId: workspace.id } }),
-					prisma.customer.count({
-						where: {
-							userId, 
-							workspaceId: workspace.id,
-							sales: {
-								some: { paid: false },
-							},
-						},
+					prisma.transaction.aggregate({
+						_sum: { amount: true },
+						where: { type: "INVESTMENT", userId, workspaceId: workspace.id },
+					}),
+					prisma.transaction.aggregate({
+						_sum: { amount: true },
+						where: { type: "SAVING", userId, workspaceId: workspace.id },
 					}),
 				]);
 
-				const totalIncome = income._sum.amount?.toNumber() ?? 0;
-				const totalExpense = expense._sum.amount?.toNumber() ?? 0;
+				const expenseTotal = expenseAgg._sum.amount?.toNumber() ?? 0;
+				const investmentTotal = investmentAgg._sum?.amount?.toNumber() ?? 0;
+				const savingTotal = savingAgg._sum?.amount?.toNumber() ?? 0;
+				const totalIncome = incomeAgg._sum.amount?.toNumber() ?? 0;
+
+				const totalOutflow = expenseTotal + investmentTotal + savingTotal;
+
+				const getPercentage = (value: number) =>
+					totalOutflow > 0 ? Number(((value / totalOutflow) * 100).toFixed(2)) : 0;
 
 				return reply.send({
 					totalIncome,
-					totalExpense,
-					netBalance: totalIncome - totalExpense,
-					totalSales,
-					paidSales,
-					unpaidSales,
-					totalCustomers,
-					customersInDebt,
+					netBalance: totalIncome - totalOutflow,
+					expense: {
+						total: expenseTotal,
+						percentage: getPercentage(expenseTotal),
+					},
+					investment: {
+						total: investmentTotal,
+						percentage: getPercentage(investmentTotal),
+					},
+					saving: {
+						total: savingTotal,
+						percentage: getPercentage(savingTotal),
+					},
 				});
-			},
+			}
 		);
 }

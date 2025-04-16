@@ -10,20 +10,18 @@ export async function getAllCategories(app: FastifyInstance) {
 		.withTypeProvider<ZodTypeProvider>()
 		.register(auth)
 		.get(
-			"/workspaces/:slug/transactions/categories",
+			"/categories",
 			{
 				schema: {
-					tags: ["transactions"],
-					summary: "Get all transaction categories",
+					tags: ["categories"],
+					summary: "Get all categories",
 					security: [{ bearerAuth: [] }],
-					params: z.object({
-						slug: z.string(),
-					}),
 					response: {
 						200: z.object({
 							categories: z.array(
 								z.object({
 									id: z.string().uuid(),
+									emoji: z.string().nullable(),
 									name: z.string(),
 								}),
 							),
@@ -32,22 +30,7 @@ export async function getAllCategories(app: FastifyInstance) {
 				},
 			},
 			async (request, reply) => {
-				const { slug } = request.params;
-
-				const workspace = await prisma.workspace.findUnique({
-					where: {
-						slug
-					}
-				})
-
-				if (!workspace) {
-					throw new BadRequestError('Workspace not found.')
-				}
-
 				const categories = await prisma.category.findMany({
-					where: {
-						workspaceId: workspace.id,
-					},
 					orderBy: { name: "asc" },
 				});
 

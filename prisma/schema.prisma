@@ -128,27 +128,26 @@ model Workspace {
   transactions Transaction[]
   customers    Customer[]
   Sale         Sale[]
-  Category     Category[]
 
   @@map("workspaces")
 }
 
 model Category {
-  id   String @id @default(uuid())
-  name String
-
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  id    String  @id @default(uuid())
+  emoji String?
+  name  String
 
   transactions Transaction[]
 
-  @@unique([workspaceId, name])
+  @@unique([name])
   @@map("categories")
 }
 
 enum TransactionType {
   INCOME
   EXPENSE
+  INVESTMENT
+  SAVING
 }
 
 model Transaction {
@@ -158,7 +157,7 @@ model Transaction {
   category    Category        @relation(fields: [categoryId], references: [id])
   categoryId  String
   date        DateTime        @default(now())
-  description String?
+  description String
 
   isRecurring  Boolean         @default(false)
   recurrence   RecurrenceRule? @relation(fields: [recurrenceId], references: [id])

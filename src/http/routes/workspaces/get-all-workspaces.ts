@@ -25,7 +25,13 @@ export async function getAllWorkspaces(app: FastifyInstance) {
 									slug: z.string(),
 									avatarUrl: z.string().nullable(),
 									createdAt: z.date(),
-									ownerId: z.string().uuid()
+									ownerId: z.string().uuid(),
+									members: z.array(
+                    z.object({
+                        userId: z.string(),
+                        role: z.string(),
+                    })
+                	),
 								}),
 							),
 						}),
@@ -49,7 +55,13 @@ export async function getAllWorkspaces(app: FastifyInstance) {
 						createdAt: true,
 						avatarUrl: true,
 						slug: true,
-						ownerId: true
+						ownerId: true,
+						members: {
+							select: {
+								userId: true,
+								role: true,
+							},
+						}
 					},
 				});
 
