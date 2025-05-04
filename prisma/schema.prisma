@@ -26,8 +26,6 @@ model User {
   transactions       Transaction[]
   notificationTokens NotificationToken[]
   subscriptions      Subscription[]
-  customers          Customer[]
-  sales              Sale[]
 
   @@map("users")
 }
@@ -38,7 +36,7 @@ model NotificationToken {
   platform  String
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("notification_tokens")
 }
@@ -112,10 +110,11 @@ model Member {
 }
 
 model Workspace {
-  id        String  @id @default(uuid())
-  name      String
-  slug      String  @unique
-  avatarUrl String? @map("avatar_url")
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  monthlyBudget Decimal? @map("monthly_budget")
+  avatarUrl     String?  @map("avatar_url")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -126,10 +125,30 @@ model Workspace {
   invites      Invite[]
   members      Member[]
   transactions Transaction[]
-  customers    Customer[]
-  Sale         Sale[]
+  Goal         Goal[]
 
   @@map("workspaces")
+}
+
+enum GoalStatus {
+  EXPIRED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Goal {
+  id           String     @id @default(uuid())
+  name         String
+  targetValue  Decimal    @map("target_value")
+  currentValue Decimal    @default(0) @map("current_value")
+  dueDate      DateTime?
+  status       GoalStatus @default(IN_PROGRESS)
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String    @map("workspace_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model Category {
@@ -155,23 +174,29 @@ model Transaction {
   amount      Decimal
   type        TransactionType
   category    Category        @relation(fields: [categoryId], references: [id])
-  categoryId  String
+  categoryId  String          @map("category_id")
   date        DateTime        @default(now())
   description String
 
   isRecurring  Boolean         @default(false)
   recurrence   RecurrenceRule? @relation(fields: [recurrenceId], references: [id])
-  recurrenceId String?
+  recurrenceId String?         @map("recurrence_id")
 
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  workspaceId String    @map("workspace_id")
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String
+  userId String @map("user_id")
 
-  notifyUser Boolean @default(false)
+  notifyUser Boolean @default(false) @map("notify_user")
 
   @@map("transactions")
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
 }
 
 model RecurrenceRule {
@@ -183,12 +208,6 @@ model RecurrenceRule {
   transactions Transaction[]
 
   @@map("recurrence_rules")
-}
-
-enum RecurrenceFrequency {
-  DAILY
-  WEEKLY
-  MONTHLY
 }
 
 model Plan {
@@ -205,12 +224,13 @@ model Plan {
 
 model Subscription {
   id          String    @id @default(uuid())
-  userId      String
-  planId      String
   status      String
-  trialEndsAt DateTime?
-  startedAt   DateTime  @default(now())
-  endsAt      DateTime?
+  trialEndsAt DateTime? @map("trial_ends_at")
+  startedAt   DateTime  @default(now()) @map("started_at")
+  endsAt      DateTime? @map("ends_at")
+
+  userId String @map("user_id")
+  planId String @map("plan_id")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
@@ -222,56 +242,13 @@ model Subscription {
 
 model Payment {
   id             String    @id @default(uuid())
-  subscriptionId String
+  subscriptionId String    @map("subscription_id")
   amount         Decimal
   status         String
-  referenceId    String
-  paidAt         DateTime?
+  referenceId    String    @unique @map("reference_id")
+  paidAt         DateTime? @map("paid_at")
 
   subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@map("payments")
-}
-
-model Customer {
-  id        String    @id @default(uuid())
-  name      String
-  email     String?   @unique
-  phone     String?
-  notes     String?
-  birthday  DateTime?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String    @map("workspace_id")
-
-  sales Sale[]
-
-  @@map("customers")
-}
-
-model Sale {
-  id          String    @id @default(uuid())
-  description String?
-  amount      Decimal
-  paid        Boolean   @default(false)
-  dueDate     DateTime?
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  customerId String   @map("customer_id")
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId String @map("user_id")
-
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String    @map("workspace_id")
-
-  @@map("sales")
 }

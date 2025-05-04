@@ -38,6 +38,7 @@ async function seed() {
 // Create categories based on predefined transactions
 const categories = await Promise.all(
   [
+    { name: "Salário", emoji: "💸" },
     { name: "Aluguel", emoji: "🏠️" },
     { name: "Alimentação", emoji: "🍔" },
     { name: "Energia", emoji: "💡" },
@@ -90,7 +91,6 @@ for (const transaction of transactions) {
       amount: transaction.amount,
       type: transaction.amount > 0 ? "EXPENSE" : "INCOME",
       description: transaction.title,
-      date: new Date(transaction.date),
       workspaceId: workspace.id, // Assign to the first workspace
       userId: workspace.ownerId, // Assign to the workspace owner
       categoryId: category.id, // Match category by emoji

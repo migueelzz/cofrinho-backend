@@ -2,7 +2,7 @@ import { fastify } from "fastify";
 
 import fastifyCors from "@fastify/cors";
 import fastifyJwt from "@fastify/jwt";
-import fastifyCookie from "@fastify/cookie"
+import fastifyCookie from "@fastify/cookie";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 
@@ -17,11 +17,7 @@ import { env } from "@/config/env";
 import { authenticateWithPassword } from "./routes/auth/authenticate-with-password";
 import { createAccount } from "./routes/auth/create-account";
 import { getProfile } from "./routes/auth/get-profile";
-import { createCustomer } from "./routes/customers/create-customer";
-import { getAllCustomers } from "./routes/customers/get-all-customers";
-import { getAllMetrics } from "./routes/metrics/get-all-metrics";
-import { createSale } from "./routes/sales/create-sale";
-import { getAllSales } from "./routes/sales/get-all-sales";
+import { getMetrics } from "./routes/metrics/get-metrics";
 import { createTransaction } from "./routes/transactions/create-transaction";
 import { getAllTransactions } from "./routes/transactions/get-all-transactions";
 import { createWorkspace } from "./routes/workspaces/create-workspace";
@@ -96,9 +92,7 @@ app.register(getProfile);
 app.register(createWorkspace);
 app.register(getAllWorkspaces);
 
-// CUSTOMERS
-app.register(createCustomer);
-app.register(getAllCustomers);
+// GOALS (TODO)
 
 // TRANSACTIONS
 app.register(createTransaction);
@@ -107,10 +101,6 @@ app.register(getAllTransactions);
 // CATEGORIES
 app.register(createCategory);
 app.register(getAllCategories);
-
-// SALES
-app.register(createSale);
-app.register(getAllSales);
 
 // INVITES
 app.register(createInvite);
@@ -127,7 +117,7 @@ app.register(updateMember)
 app.register(removeMember)
 
 // METRICS
-app.register(getAllMetrics);
+app.register(getMetrics);
 
 app
 	.listen({
